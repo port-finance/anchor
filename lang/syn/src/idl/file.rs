@@ -385,7 +385,19 @@ fn parse_ty_defs(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
                         })
                     })
                     .collect::<Result<Vec<IdlField>>>(),
-                syn::Fields::Unnamed(_) => return None,
+                syn::Fields::Unnamed(fields) => fields
+                    .unnamed
+                    .iter()
+                    .enumerate()
+                    .map(|(index, f)| {
+                        let mut tts = proc_macro2::TokenStream::new();
+                        f.ty.to_tokens(&mut tts);
+                        Ok(IdlField {
+                            name: index.to_string(),
+                            ty: tts.to_string().parse()?,
+                        })
+                    })
+                    .collect::<Result<Vec<IdlField>>>(),
                 _ => panic!("Empty structs are allowed."),
             };
 
